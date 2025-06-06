@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
+
 import Icon from "./Icon.vue";
+
+/*
+ * Custom Types
+ */
 
 type Props = {
   imageUrl: string | null;
@@ -14,11 +19,31 @@ type Events = {
   (e: "file-selected", file: File): void;
 };
 
+/*
+ * Vue Definitions
+ */
+
 const emit = defineEmits<Events>();
 const props = defineProps<Props>();
 
+/*
+ * Refs & Reactives
+ */
+
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+
+/*
+ * Computeds
+ */
+
+const imageStyles = computed(() => ({
+  transform: `rotate(${props.rotation}deg) scale(${props.flipX}, ${props.flipY})`,
+}));
+
+/*
+ * Methods
+ */
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
@@ -35,10 +60,6 @@ function onDrop(e: DragEvent) {
     emit("file-selected", e.dataTransfer.files[0]);
   }
 }
-
-const imageStyles = computed(() => ({
-  transform: `rotate(${props.rotation}deg) scale(${props.flipX}, ${props.flipY})`,
-}));
 </script>
 
 <template>
@@ -77,8 +98,8 @@ const imageStyles = computed(() => ({
 
 <style lang="scss" scoped>
 .canvas {
-  width: 800px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   border: 2px dashed #ddd;
   border-radius: 12px;
   position: relative;
@@ -131,8 +152,8 @@ const imageStyles = computed(() => ({
   position: absolute;
   top: 0;
   left: 0;
-  width: 800px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   background-image: linear-gradient(
       to right,
       rgba(0, 0, 0, 0.2) 1px,

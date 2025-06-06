@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 
+/*
+ * Custom Types
+ */
+
 type IconName =
   | "drop"
   | "upload"
@@ -16,11 +20,16 @@ type Props = {
   name: IconName;
 };
 
+/*
+ * Vue Definitions
+ */
+
 const props = defineProps<Props>();
 
-/**
- * Icons from https://heroicons.com
+/*
+ * Constants
  */
+
 const paths = {
   drop: "M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3",
   upload:
@@ -36,6 +45,10 @@ const paths = {
   "flip-horizontal":
     "M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5",
 } as const;
+
+/*
+ * Computeds
+ */
 
 const path = computed(() => paths[props.name]);
 </script>

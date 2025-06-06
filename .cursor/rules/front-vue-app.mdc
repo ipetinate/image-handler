@@ -1,0 +1,55 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Front Vue Apps
+
+## Code Style
+
+- Always use this template syntax for new Vue 3 + TS components
+
+  ```vue
+  <script lang="ts" setup>
+  /*
+   * Custom Types
+   */
+  type Props = {
+    // props here
+  };
+
+  /*
+   * Vue Definitions
+   */
+  defineProps<Props>();
+  </script>
+
+  <template>
+    <div class="parent">
+      <div class="parent__children"></div>
+    </div>
+  </template>
+
+  <script lang="scss" scoped>
+  .parent {
+    /* CSS Rules here */
+
+    &__children {
+        /* CSS Rules here */
+    }
+  }
+  </script>
+  ```
+
+  - Don't add comments with `//`, never.
+  - Always use `function name() {}` over `const name = () => {}`
+  
+## Code recommendations  
+
+- Always check folders to verify if have a model, function or other resource with same functionality, to avoid duplications
+- If possible, on helper functions, hooks, stores, etc, add JSDocs (but, without @return declaration) with only a description and a use example.
+
+## Chat results
+
+- Don't send a changes resume, I don't care about, and I don't read that.
+- Be straight to the point, do what I asked without inventing and without breaking what already exists.

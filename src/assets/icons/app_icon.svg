@@ -1,0 +1,25 @@
+<svg width="200" height="200" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .highlight { fill: var(--highlight-color, #F4C15D); }
+        .background { fill: #2D698E; }
+        .frame { fill: #1B3C50; }
+        .foreground { fill: #F2EBD7; }
+        .circle { fill: #F2EBD7; }
+        .plus-circle { fill: #1B3C50; }
+        .plus { fill: #F2EBD7; }
+    </style>
+
+    <rect width="512" height="512" rx="50" class="background" />
+    <g transform="translate(100, 100)">
+        <rect width="300" height="300" rx="20" class="frame" />
+        <rect x="20" y="20" width="260" height="260" rx="10" class="highlight" />
+        <path d="M40 200 L100 120 L160 180 L200 130 L260 200 L260 240 L40 240 Z" class="foreground" />
+        <circle cx="240" cy="60" r="20" class="circle" />
+    </g>
+    <g transform="translate(320, 320)">
+        <circle r="80" class="plus-circle" />
+        <rect x="-10" y="-40" width="20" height="80" class="plus" />
+        <rect x="-40" y="-10" width="80" height="20" class="plus" />
+    </g>
+</svg>
+  

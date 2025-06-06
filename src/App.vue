@@ -1,109 +1,157 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { onMounted } from "vue";
 
-import Canvas from './components/Canvas.vue';
-import Toolbar from './components/Toolbar.vue';
-import Window from './components/Window.vue';
+import { useDownload } from "./hooks/useDownload";
+import { useWindowStore } from "./stores/useWindowStore";
 
-const file = ref<File | null>(null);
-const imageUrl = ref<string | null>(null);
-const rotation = ref(0);
-const flipX = ref(1);
-const flipY = ref(1);
-const showGrid = ref(false);
+import Canvas from "./components/Canvas.vue";
+import Toolbar from "./components/Toolbar.vue";
+import Window from "./components/Window.vue";
+import Modal from "./components/Modal.vue";
+import Dock from "./components/Dock.vue";
 
-function loadFile(f: File) {
-  file.value = f;
-  imageUrl.value = URL.createObjectURL(f);
-  resetTransforms();
+import bannerImg from "./assets/quick-img-tweakr-banner.png";
+
+/*
+ * Custom Types
+ */
+
+type Position = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/*
+ * Hooks
+ */
+
+const windowStore = useWindowStore();
+const {
+  showDownloadModal,
+  downloadingWindowId,
+  handleDownloadConfirm,
+  handleDownloadCancel,
+  handleDownload,
+  getCurrentDownloadFileName,
+} = useDownload();
+
+/*
+ * Methods
+ */
+
+function handleCreateNewWindow() {
+  windowStore.createWindow();
 }
 
-function resetTransforms() {
-  rotation.value = 0;
-  flipX.value = 1;
-  flipY.value = 1;
+function handlePositionChange(windowId: string, pos: Position) {
+  windowStore.updateWindowPosition(windowId, pos);
 }
 
-function rotateLeft() {
-  rotation.value -= 90;
+function handleBringToFront(windowId: string) {
+  windowStore.bringToFront(windowId);
 }
 
-function rotateRight() {
-  rotation.value += 90;
+function handleDownloadConfirmWrapper(fileName: string) {
+  const windowInstance = downloadingWindowId.value
+    ? windowStore.getWindow(downloadingWindowId.value) || null
+    : null;
+
+  handleDownloadConfirm(fileName, windowInstance);
 }
 
-function flipHorizontal() {
-  flipX.value *= -1;
+function getCurrentDownloadFileNameWrapper(): string {
+  const windowInstance = downloadingWindowId.value
+    ? windowStore.getWindow(downloadingWindowId.value) || null
+    : null;
+
+  return getCurrentDownloadFileName(windowInstance);
 }
 
-function flipVertical() {
-  flipY.value *= -1;
-}
+/*
+ * Lifecycle Hooks
+ */
 
-function removeImage() {
-  file.value = null;
-  imageUrl.value = null;
-  resetTransforms();
-}
-
-function downloadImage() {
-  if (!imageUrl.value) return;
-
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = imageUrl.value;
-
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-
-    const swapSize = Math.abs(rotation.value % 180) === 90;
-    const width = swapSize ? img.height : img.width;
-    const height = swapSize ? img.width : img.height;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.save();
-
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate((rotation.value * Math.PI) / 180);
-    ctx.scale(flipX.value, flipY.value);
-
-    ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-
-    ctx.restore();
-
-    const link = document.createElement('a');
-    link.download = file.value?.name ?? 'image.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-}
+onMounted(() => {
+  windowStore.createWindow();
+});
 </script>
 
 <template>
-  <Window>
-    <Toolbar
-      :grid-enabled="showGrid"
-      @flip-vertical="flipVertical"
-      @flip-horizontal="flipHorizontal"
-      @rotate-left="rotateLeft"
-      @rotate-right="rotateRight"
-      @toggle-grid="showGrid = !showGrid"
-      @download="downloadImage"
-      @remove="removeImage"
-    />
+  <div class="banner">
+    <img :src="bannerImg" alt="Quick Img Tweakr" class="banner-image" />
+  </div>
 
-    <Canvas
-      :image-url="imageUrl"
-      :rotation="rotation"
-      :flip-x="flipX"
-      :flip-y="flipY"
-      :show-grid="showGrid"
-      @file-selected="loadFile"
-    />
-  </Window>
+  <!-- Render all non-minimized windows -->
+  <template
+    v-for="windowInstance in windowStore.openWindows"
+    :key="windowInstance.id"
+  >
+    <Window
+      :window-id="windowInstance.id"
+      :initial-position="windowInstance.position"
+      :z-index="windowInstance.zIndex"
+      :is-animating-minimize="windowInstance.isAnimatingMinimize"
+      :is-animating-restore="windowInstance.isAnimatingRestore"
+      :file-name="windowInstance.fileName"
+      :has-image="!!windowInstance.imageUrl"
+      @minimize="windowStore.minimizeWindow"
+      @close="windowStore.closeWindow"
+      @position-change="(pos) => handlePositionChange(windowInstance.id, pos)"
+      @bring-to-front="handleBringToFront"
+    >
+      <Toolbar
+        :grid-enabled="windowInstance.showGrid"
+        :has-image="!!windowInstance.imageUrl"
+        @flip-vertical="windowStore.flipVertical(windowInstance.id)"
+        @flip-horizontal="windowStore.flipHorizontal(windowInstance.id)"
+        @rotate-left="windowStore.rotateLeft(windowInstance.id)"
+        @rotate-right="windowStore.rotateRight(windowInstance.id)"
+        @toggle-grid="windowStore.toggleGrid(windowInstance.id)"
+        @download="handleDownload(windowInstance.id)"
+        @remove="windowStore.removeImage(windowInstance.id)"
+      />
+
+      <Canvas
+        :image-url="windowInstance.imageUrl"
+        :rotation="windowInstance.rotation"
+        :flip-x="windowInstance.flipX"
+        :flip-y="windowInstance.flipY"
+        :show-grid="windowInstance.showGrid"
+        @file-selected="(file: File) => windowStore.loadFileToWindow(windowInstance.id, file)"
+      />
+    </Window>
+  </template>
+
+  <Modal
+    :show="showDownloadModal"
+    title="Salvar Imagem"
+    :file-name="getCurrentDownloadFileNameWrapper()"
+    @close="handleDownloadCancel"
+    @confirm="handleDownloadConfirmWrapper"
+  />
+
+  <Dock
+    :has-open-windows="windowStore.hasOpenWindows"
+    :all-windows="windowStore.windows"
+    @restore-window="windowStore.restoreWindow"
+    @bring-to-front="handleBringToFront"
+    @create-new-window="handleCreateNewWindow"
+  />
 </template>
+
+<style lang="scss" scoped>
+.banner {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+.banner-image {
+  width: 180px;
+  height: auto;
+  display: block;
+}
+</style>

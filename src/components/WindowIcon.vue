@@ -1,62 +1,58 @@
 <script lang="ts" setup>
-const props = defineProps<{
+import { computed } from "vue";
+
+import closeIcon from "../assets/icons/close.svg";
+import minimizeIcon from "../assets/icons/minimize.svg";
+import maximizeIcon from "../assets/icons/maximize.svg";
+
+/*
+ * Custom Types
+ */
+
+interface Props {
   name: "close" | "minimize" | "maximize";
   size?: number;
-}>();
+}
 
-const size = props.size ?? 6;
+/*
+ * Vue Definitions
+ */
+
+const props = withDefaults(defineProps<Props>(), {
+  size: 10,
+});
+
+/*
+ * Computeds
+ */
+
+const iconSrc = computed(() => {
+  switch (props.name) {
+    case "close":
+      return closeIcon;
+    case "minimize":
+      return minimizeIcon;
+    case "maximize":
+      return maximizeIcon;
+    default:
+      return closeIcon;
+  }
+});
 </script>
 
 <template>
-  <svg
+  <img
+    :src="iconSrc"
+    :alt="props.name"
     :width="size"
     :height="size"
-    viewBox="0 0 6 6"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <template v-if="props.name === 'close'">
-      <line
-        x1="1"
-        y1="1"
-        x2="5"
-        y2="5"
-        stroke="black"
-        stroke-width="0.8"
-        stroke-linecap="round"
-      />
-      <line
-        x1="5"
-        y1="1"
-        x2="1"
-        y2="5"
-        stroke="black"
-        stroke-width="0.8"
-        stroke-linecap="round"
-      />
-    </template>
-
-    <template v-else-if="props.name === 'minimize'">
-      <rect x="1" y="2.8" width="4" height="0.4" fill="black" />
-    </template>
-
-    <template v-else-if="props.name === 'maximize'">
-      <polygon
-        points="1,3 3,1 3.6,1.6 2.2,3"
-        fill="none"
-        stroke="black"
-        stroke-width="0.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <polygon
-        points="3,5 5,3 4.4,2.4 2.8,4"
-        fill="none"
-        stroke="black"
-        stroke-width="0.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </template>
-  </svg>
+    class="window-icon"
+  />
 </template>
+
+<style scoped>
+.window-icon {
+  display: block;
+  pointer-events: none;
+}
+</style>
