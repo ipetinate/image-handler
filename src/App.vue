@@ -159,6 +159,10 @@ onMounted(() => {
         @reset-transformations="
           windowStore.resetTransformations(windowInstance.id)
         "
+        @zoom-to-fill="windowStore.zoomToFill(windowInstance.id)"
+        @zoom-to-fit="windowStore.zoomToFit(windowInstance.id)"
+        @zoom-increase="windowStore.zoomIncrease(windowInstance.id)"
+        @zoom-decrease="windowStore.zoomDecrease(windowInstance.id)"
       />
 
       <Canvas
@@ -167,7 +171,14 @@ onMounted(() => {
         :flip-x="windowInstance.flipX"
         :flip-y="windowInstance.flipY"
         :show-grid="windowInstance.showGrid"
+        :image-scale="windowInstance.imageScale"
+        :image-offset-x="windowInstance.imageOffsetX"
+        :image-offset-y="windowInstance.imageOffsetY"
         @file-selected="(file: File) => windowStore.loadFileToWindow(windowInstance.id, file)"
+        @image-position-changed="(x: number, y: number) => windowStore.updateImagePosition(windowInstance.id, x, y)"
+        @zoom-change="(scale: number) => windowStore.setZoomLevel(windowInstance.id, scale)"
+        @zoom-increase="windowStore.zoomIncrease(windowInstance.id)"
+        @zoom-decrease="windowStore.zoomDecrease(windowInstance.id)"
       />
     </Window>
   </template>

@@ -18,7 +18,12 @@ type IconName =
   | "trash"
   | "flip-vertical"
   | "flip-horizontal"
-  | "reset";
+  | "reset"
+  | "zoom-in"
+  | "zoom-out"
+  | "zoom-plus"
+  | "zoom-minus"
+  | "percentage";
 
 type Props = {
   gridEnabled: boolean;
@@ -34,6 +39,10 @@ type Events = {
   (e: "download"): void;
   (e: "remove"): void;
   (e: "reset-transformations"): void;
+  (e: "zoom-to-fill"): void;
+  (e: "zoom-to-fit"): void;
+  (e: "zoom-increase"): void;
+  (e: "zoom-decrease"): void;
 };
 
 interface ToolbarAction {
@@ -46,7 +55,11 @@ interface ToolbarAction {
     | "toggle-grid"
     | "download"
     | "remove"
-    | "reset-transformations";
+    | "reset-transformations"
+    | "zoom-to-fill"
+    | "zoom-to-fit"
+    | "zoom-increase"
+    | "zoom-decrease";
   icon: IconName;
   title: string;
   group: "transform" | "view" | "file";
@@ -109,6 +122,20 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
   },
   // View group
   {
+    id: "zoom-to-fill",
+    event: "zoom-to-fill",
+    icon: "zoom-in",
+    title: "Preencher grid (ativa grade)",
+    group: "view",
+  },
+  {
+    id: "zoom-to-fit",
+    event: "zoom-to-fit",
+    icon: "zoom-out",
+    title: "Ajustar à grid (ativa grade)",
+    group: "view",
+  },
+  {
     id: "toggle-grid",
     event: "toggle-grid",
     icon: "grid",
@@ -163,6 +190,10 @@ function handleActionClick(action: ToolbarAction) {
     download: () => emit("download"),
     remove: () => emit("remove"),
     "reset-transformations": () => emit("reset-transformations"),
+    "zoom-to-fill": () => emit("zoom-to-fill"),
+    "zoom-to-fit": () => emit("zoom-to-fit"),
+    "zoom-increase": () => emit("zoom-increase"),
+    "zoom-decrease": () => emit("zoom-decrease"),
   };
 
   eventMap[action.event]();

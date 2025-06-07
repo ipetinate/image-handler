@@ -15,7 +15,12 @@ type IconName =
   | "trash"
   | "flip-vertical"
   | "flip-horizontal"
-  | "reset";
+  | "reset"
+  | "zoom-in"
+  | "zoom-out"
+  | "zoom-plus"
+  | "zoom-minus"
+  | "percentage";
 
 type Props = {
   name: IconName;
@@ -46,6 +51,16 @@ const paths = {
   "flip-horizontal":
     "M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5",
   reset: "M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3",
+  "zoom-in":
+    "M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15",
+  "zoom-out":
+    "M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25",
+  "zoom-plus":
+    "m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6",
+  "zoom-minus":
+    "m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM13.5 10.5h-6",
+  percentage:
+    "M8 8.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm11 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM8.5 6 15.5 18",
 } as const;
 
 /*

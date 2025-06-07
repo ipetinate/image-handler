@@ -15,6 +15,9 @@ export interface WindowInstance {
   isAnimatingMinimize: boolean;
   isAnimatingRestore: boolean;
   type?: "image" | "settings";
+  imageScale: number;
+  imageOffsetX: number;
+  imageOffsetY: number;
 }
 
 export const useWindowStore = defineStore("windows", () => {
@@ -58,6 +61,9 @@ export const useWindowStore = defineStore("windows", () => {
       zIndex: nextZIndex.value++,
       isAnimatingMinimize: false,
       isAnimatingRestore: false,
+      imageScale: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
     };
 
     windows.value.push(newWindow);
@@ -84,6 +90,9 @@ export const useWindowStore = defineStore("windows", () => {
       isAnimatingMinimize: false,
       isAnimatingRestore: false,
       type: "settings",
+      imageScale: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
     };
 
     // Remove existing settings window if any
@@ -132,6 +141,9 @@ export const useWindowStore = defineStore("windows", () => {
             updates.isAnimatingMinimize ?? currentWindow.isAnimatingMinimize,
           isAnimatingRestore:
             updates.isAnimatingRestore ?? currentWindow.isAnimatingRestore,
+          imageScale: updates.imageScale ?? currentWindow.imageScale,
+          imageOffsetX: updates.imageOffsetX ?? currentWindow.imageOffsetX,
+          imageOffsetY: updates.imageOffsetY ?? currentWindow.imageOffsetY,
           id: currentWindow.id, // Ensure id is never overwritten
         };
       }
@@ -198,6 +210,9 @@ export const useWindowStore = defineStore("windows", () => {
       rotation: 0,
       flipX: 1,
       flipY: 1,
+      imageScale: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
     });
   }
 
@@ -256,6 +271,9 @@ export const useWindowStore = defineStore("windows", () => {
       rotation: 0,
       flipX: 1,
       flipY: 1,
+      imageScale: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
     });
   }
 
@@ -266,8 +284,74 @@ export const useWindowStore = defineStore("windows", () => {
         rotation: 0,
         flipX: 1,
         flipY: 1,
+        imageScale: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
       });
     }
+  }
+
+  function zoomToFill(id: string) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      updateWindow(id, {
+        imageScale: 2,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+        showGrid: true,
+      });
+    }
+  }
+
+  function zoomToFit(id: string) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      updateWindow(id, {
+        imageScale: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+        showGrid: true,
+      });
+    }
+  }
+
+  function zoomIncrease(id: string) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      const newScale = Math.min(window.imageScale + 0.25, 5);
+      updateWindow(id, {
+        imageScale: newScale,
+        showGrid: true,
+      });
+    }
+  }
+
+  function zoomDecrease(id: string) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      const newScale = Math.max(window.imageScale - 0.25, 0.25);
+      updateWindow(id, {
+        imageScale: newScale,
+      });
+    }
+  }
+
+  function setZoomLevel(id: string, scale: number) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      const clampedScale = Math.max(0.25, Math.min(scale, 5));
+      updateWindow(id, {
+        imageScale: clampedScale,
+        showGrid: clampedScale !== 1,
+      });
+    }
+  }
+
+  function updateImagePosition(id: string, offsetX: number, offsetY: number) {
+    updateWindow(id, {
+      imageOffsetX: offsetX,
+      imageOffsetY: offsetY,
+    });
   }
 
   return {
@@ -297,5 +381,11 @@ export const useWindowStore = defineStore("windows", () => {
     toggleGrid,
     removeImage,
     resetTransformations,
+    zoomToFill,
+    zoomToFit,
+    zoomIncrease,
+    zoomDecrease,
+    setZoomLevel,
+    updateImagePosition,
   };
 });
