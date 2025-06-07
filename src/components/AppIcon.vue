@@ -11,7 +11,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: "mouseenter", index: number, event: MouseEvent): void;
+  (e: "mouseenter", index: number): void;
   (e: "mouseleave"): void;
   (e: "click", item: DockItem): void;
 }
@@ -25,8 +25,8 @@ const emit = defineEmits<Emits>();
 /*
  * Event Handlers
  */
-function handleMouseEnter(event: MouseEvent) {
-  emit("mouseenter", props.index, event);
+function handleMouseEnter() {
+  emit("mouseenter", props.index);
 }
 
 function handleMouseLeave() {
@@ -64,7 +64,11 @@ function handleClick() {
 
     <!-- Open indicator -->
     <div
-      v-if="!item.isMinimized && item.type === 'window'"
+      v-if="
+        !item.isMinimized &&
+        item.window &&
+        (item.type === 'window' || item.type === 'settings')
+      "
       class="dock-indicator"
     ></div>
   </div>

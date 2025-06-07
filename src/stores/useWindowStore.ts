@@ -14,6 +14,7 @@ export interface WindowInstance {
   zIndex: number;
   isAnimatingMinimize: boolean;
   isAnimatingRestore: boolean;
+  type?: "image" | "settings";
 }
 
 export const useWindowStore = defineStore("windows", () => {
@@ -63,8 +64,46 @@ export const useWindowStore = defineStore("windows", () => {
     return newWindow;
   }
 
+  function createSettingsWindow(): WindowInstance {
+    const settingsWindow: WindowInstance = {
+      id: "settings-window",
+      isMinimized: false,
+      imageUrl: null,
+      fileName: "Configurações",
+      rotation: 0,
+      flipX: 1,
+      flipY: 1,
+      showGrid: false,
+      position: {
+        x: (window.innerWidth - 800) / 2,
+        y: (window.innerHeight - 600) / 2,
+        width: 800,
+        height: 600,
+      },
+      zIndex: nextZIndex.value++,
+      isAnimatingMinimize: false,
+      isAnimatingRestore: false,
+      type: "settings",
+    };
+
+    // Remove existing settings window if any
+    const existingIndex = windows.value.findIndex(
+      (w) => w.id === "settings-window"
+    );
+    if (existingIndex !== -1) {
+      windows.value.splice(existingIndex, 1);
+    }
+
+    windows.value.push(settingsWindow);
+    return settingsWindow;
+  }
+
   function getWindow(id: string): WindowInstance | undefined {
     return windows.value.find((w) => w.id === id);
+  }
+
+  function getSettingsWindow(): WindowInstance | undefined {
+    return windows.value.find((w) => w.id === "settings-window");
   }
 
   function updateWindow(id: string, updates: Partial<WindowInstance>) {
@@ -75,8 +114,14 @@ export const useWindowStore = defineStore("windows", () => {
         windows.value[windowIndex] = {
           ...currentWindow,
           isMinimized: updates.isMinimized ?? currentWindow.isMinimized,
-          imageUrl: updates.imageUrl ?? currentWindow.imageUrl,
-          fileName: updates.fileName ?? currentWindow.fileName,
+          imageUrl:
+            updates.imageUrl !== undefined
+              ? updates.imageUrl
+              : currentWindow.imageUrl,
+          fileName:
+            updates.fileName !== undefined
+              ? updates.fileName
+              : currentWindow.fileName,
           rotation: updates.rotation ?? currentWindow.rotation,
           flipX: updates.flipX ?? currentWindow.flipX,
           flipY: updates.flipY ?? currentWindow.flipY,
@@ -200,6 +245,7 @@ export const useWindowStore = defineStore("windows", () => {
 
   function removeImage(id: string) {
     const window = getWindow(id);
+
     if (window?.imageUrl) {
       URL.revokeObjectURL(window.imageUrl);
     }
@@ -213,6 +259,17 @@ export const useWindowStore = defineStore("windows", () => {
     });
   }
 
+  function resetTransformations(id: string) {
+    const window = getWindow(id);
+    if (window && window.imageUrl) {
+      updateWindow(id, {
+        rotation: 0,
+        flipX: 1,
+        flipY: 1,
+      });
+    }
+  }
+
   return {
     windows,
 
@@ -222,7 +279,9 @@ export const useWindowStore = defineStore("windows", () => {
     topWindow,
 
     createWindow,
+    createSettingsWindow,
     getWindow,
+    getSettingsWindow,
     updateWindow,
     bringToFront,
     minimizeWindow,
@@ -237,5 +296,6 @@ export const useWindowStore = defineStore("windows", () => {
     flipVertical,
     toggleGrid,
     removeImage,
+    resetTransformations,
   };
 });

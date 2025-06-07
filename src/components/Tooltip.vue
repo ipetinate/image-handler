@@ -1,43 +1,121 @@
 <script lang="ts" setup>
+import { ref, onMounted, onBeforeUnmount } from "vue";
+
 /*
  * Custom Types
  */
 interface Props {
   text: string;
-  position: { x: number; y: number };
-  visible: boolean;
 }
 
 /*
  * Vue Definitions
  */
 defineProps<Props>();
+
+/*
+ * Refs
+ */
+const triggerRef = ref<HTMLElement>();
+const tooltipRef = ref<HTMLElement>();
+const showTooltip = ref(false);
+
+/*
+ * Methods
+ */
+function updateTooltipPosition() {
+  if (!triggerRef.value || !tooltipRef.value || !showTooltip.value) return;
+
+  // Find the actual scaled element (dock-item)
+  const scaledElement = triggerRef.value.querySelector(
+    ".dock-item"
+  ) as HTMLElement;
+  const targetElement = scaledElement || triggerRef.value;
+
+  const rect = targetElement.getBoundingClientRect();
+  const triggerRect = triggerRef.value.getBoundingClientRect();
+
+  // Position tooltip above the visual top of the scaled element
+  const tooltipHeight = tooltipRef.value.offsetHeight;
+  const gap = 8;
+
+  // Calculate position relative to the trigger wrapper
+  const leftOffset = rect.left - triggerRect.left + rect.width / 2;
+  const topOffset = rect.top - triggerRect.top - tooltipHeight - gap;
+
+  tooltipRef.value.style.left = `${leftOffset}px`;
+  tooltipRef.value.style.top = `${topOffset}px`;
+  tooltipRef.value.style.transform = "translateX(-50%)";
+}
+
+function handleMouseEnter() {
+  showTooltip.value = true;
+  requestAnimationFrame(() => {
+    updateTooltipPosition();
+  });
+}
+
+function handleMouseLeave() {
+  showTooltip.value = false;
+}
+
+/*
+ * Lifecycle
+ */
+onMounted(() => {
+  if (showTooltip.value) {
+    updateTooltipPosition();
+  }
+});
+
+onBeforeUnmount(() => {
+  // Cleanup if needed
+});
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      v-if="visible"
-      class="tooltip"
-      :style="{
-        left: position.x + 'px',
-        top: position.y + 'px',
-      }"
-    >
+  <div
+    ref="triggerRef"
+    class="tooltip-trigger"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+  >
+    <!-- Wrapper fora da tooltip -->
+    <div class="tooltip-slot">
+      <slot />
+    </div>
+
+    <!-- Tooltip posicionada acima -->
+    <div v-if="showTooltip" ref="tooltipRef" class="tooltip">
       <div class="tooltip__content">
         {{ text }}
-        <div class="tooltip__arrow"></div>
+        <div class="tooltip__arrow" />
       </div>
     </div>
-  </Teleport>
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tooltip-slot {
+  /* Wrapper que pode crescer com scale() */
+  transform-origin: bottom center;
+}
+
+/* Tooltip acima do slot */
 .tooltip {
-  position: fixed;
+  position: absolute;
   z-index: 99999;
   pointer-events: none;
-  transform: translate(-50%, -100%);
+  opacity: 0;
+  animation: tooltipShow 0.15s ease forwards;
 }
 
 .tooltip__content {
@@ -51,14 +129,12 @@ defineProps<Props>();
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   position: relative;
-  animation: tooltipFadeIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-weight: 500;
-  margin-bottom: 7px; /* 5px da seta + 2px de distância = 7px total */
 }
 
 .tooltip__arrow {
   position: absolute;
-  bottom: -5px;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
@@ -68,14 +144,14 @@ defineProps<Props>();
   border-top: 5px solid rgba(0, 0, 0, 0.85);
 }
 
-@keyframes tooltipFadeIn {
+@keyframes tooltipShow {
   from {
     opacity: 0;
-    transform: translate(-50%, -90%) scale(0.95);
+    transform: translateX(-50%) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -100%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 }
 </style>

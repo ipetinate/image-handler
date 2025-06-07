@@ -1,12 +1,16 @@
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import type { WindowInstance } from "../stores/useWindowStore";
+
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+
+import { generateConsistentColoredIcon } from "../utils/generateColoredIcon";
+
 import appIcon from "../assets/quick-img-tweakr.png";
 import addNewIcon from "../assets/icons/qit-add-new.png";
-import { generateConsistentColoredIcon } from "../utils/generateColoredIcon";
+import settingsIcon from "../assets/icons/qit-settings.png";
 
 export interface DockItem {
   id: string;
-  type: "window" | "app" | "separator" | "plus";
+  type: "window" | "app" | "separator" | "plus" | "settings";
   window?: WindowInstance;
   title: string;
   icon: string;
@@ -17,6 +21,7 @@ export interface DockEmits {
   (e: "restore-window", windowId: string): void;
   (e: "bring-to-front", windowId: string): void;
   (e: "create-new-window"): void;
+  (e: "open-settings"): void;
 }
 
 export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
@@ -47,14 +52,26 @@ export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
 
     // Add window items with colored icons
     sortedWindows.value.forEach((window) => {
-      items.push({
-        id: window.id,
-        type: "window",
-        window,
-        title: window.fileName || "Quick Img Tweakr",
-        icon: generateConsistentColoredIcon(window.id),
-        isMinimized: window.isMinimized,
-      });
+      if (window.id === "settings-window") {
+        // Special handling for settings window
+        items.push({
+          id: window.id,
+          type: "settings",
+          window,
+          title: "Settings",
+          icon: settingsIcon,
+          isMinimized: window.isMinimized,
+        });
+      } else {
+        items.push({
+          id: window.id,
+          type: "window",
+          window,
+          title: window.fileName || "Quick Img Tweakr",
+          icon: generateConsistentColoredIcon(window.id),
+          isMinimized: window.isMinimized,
+        });
+      }
     });
 
     // Add default app if no windows
@@ -88,8 +105,49 @@ export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
       isMinimized: false,
     });
 
+    // Add settings button only if settings window doesn't exist
+    const hasSettingsWindow = sortedWindows.value.some(
+      (w) => w.id === "settings-window"
+    );
+    if (!hasSettingsWindow) {
+      items.push({
+        id: "settings",
+        type: "settings",
+        title: "Settings",
+        icon: settingsIcon,
+        isMinimized: false,
+      });
+    }
+
     return items;
   });
+
+  /*
+   * Initialization & Reset Functions
+   */
+  function initializeDockSpacing() {
+    if (!dockRef.value) return;
+
+    const items = dockRef.value.querySelectorAll(
+      ".dock-item:not(.dock-separator)"
+    );
+
+    items.forEach((item) => {
+      const element = item as HTMLElement;
+      element.style.transform = "scale(1)";
+      element.style.transformOrigin = "50% 100%";
+      element.style.marginLeft = "0px"; // Half of base 12px gap
+      element.style.marginRight = "0px"; // Half of base 12px gap
+      element.style.transition =
+        "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), margin 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+    });
+
+    dockWidth.value = "auto";
+  }
+
+  function resetMagnification() {
+    initializeDockSpacing();
+  }
 
   /*
    * Magnification Logic
@@ -189,27 +247,6 @@ export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
 
     // Just set the width, no position changes
     dockWidth.value = `${Math.max(finalDockWidth, 200)}px`;
-  }
-
-  function resetMagnification() {
-    if (!dockRef.value) return;
-
-    const items = dockRef.value.querySelectorAll(
-      ".dock-item:not(.dock-separator)"
-    );
-
-    items.forEach((item) => {
-      const element = item as HTMLElement;
-      element.style.transform = "scale(1)";
-      element.style.transformOrigin = "50% 100%";
-      element.style.marginLeft = "6px"; // Half of base 12px gap
-      element.style.marginRight = "6px"; // Half of base 12px gap
-      element.style.transition =
-        "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), margin 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
-    });
-
-    // Reset dock width only
-    dockWidth.value = "auto";
   }
 
   /*
@@ -322,6 +359,8 @@ export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
       }
     } else if (item.type === "plus" || item.type === "app") {
       emit("create-new-window");
+    } else if (item.type === "settings") {
+      emit("open-settings");
     }
   }
 
@@ -332,6 +371,11 @@ export function useDock(allWindows: WindowInstance[], emit: DockEmits) {
     if (dockRef.value) {
       dockRef.value.addEventListener("mousemove", handleMouseMove);
       dockRef.value.addEventListener("mouseleave", handleMouseLeave);
+
+      // Initialize spacing after DOM is ready
+      nextTick(() => {
+        initializeDockSpacing();
+      });
     }
   }
 

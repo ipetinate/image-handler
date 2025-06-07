@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import { ref, nextTick } from "vue";
+import { ref } from "vue";
 
 import Icon from "./Icon.vue";
-import Tooltip from "./Tooltip.vue";
 
 /*
  * Custom Types
@@ -17,7 +16,8 @@ type IconName =
   | "download"
   | "trash"
   | "flip-vertical"
-  | "flip-horizontal";
+  | "flip-horizontal"
+  | "reset";
 
 type Props = {
   gridEnabled: boolean;
@@ -32,6 +32,7 @@ type Events = {
   (e: "toggle-grid"): void;
   (e: "download"): void;
   (e: "remove"): void;
+  (e: "reset-transformations"): void;
 };
 
 interface ToolbarAction {
@@ -43,7 +44,8 @@ interface ToolbarAction {
     | "rotate-right"
     | "toggle-grid"
     | "download"
-    | "remove";
+    | "remove"
+    | "reset-transformations";
   icon: IconName;
   title: string;
   group: "transform" | "view" | "file";
@@ -75,28 +77,28 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "flip-vertical",
     event: "flip-vertical",
     icon: "flip-vertical",
-    title: "Espelhar vertical",
+    title: "Espelhar vertical (⌘⇧V)",
     group: "transform",
   },
   {
     id: "flip-horizontal",
     event: "flip-horizontal",
     icon: "flip-horizontal",
-    title: "Espelhar horizontal",
+    title: "Espelhar horizontal (⌘⇧H)",
     group: "transform",
   },
   {
     id: "rotate-left",
     event: "rotate-left",
     icon: "rotate-left",
-    title: "Girar esquerda",
+    title: "Girar esquerda (⌘R)",
     group: "transform",
   },
   {
     id: "rotate-right",
     event: "rotate-right",
     icon: "rotate-right",
-    title: "Girar direita",
+    title: "Girar direita (⌘⇧R)",
     group: "transform",
   },
   // View group
@@ -104,10 +106,17 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "toggle-grid",
     event: "toggle-grid",
     icon: "grid",
-    title: "Mostrar grid",
+    title: "Mostrar grid (⌘G)",
     group: "view",
   },
   // File group
+  {
+    id: "reset-transformations",
+    event: "reset-transformations",
+    icon: "reset",
+    title: "Reverter alterações (⌘⇧U)",
+    group: "file",
+  },
   {
     id: "download",
     event: "download",
@@ -119,7 +128,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "remove",
     event: "remove",
     icon: "trash",
-    title: "Remover imagem",
+    title: "Remover imagem (⌘⇧D)",
     group: "file",
   },
 ] as const;
@@ -147,6 +156,7 @@ function handleActionClick(action: ToolbarAction) {
     "toggle-grid": () => emit("toggle-grid"),
     download: () => emit("download"),
     remove: () => emit("remove"),
+    "reset-transformations": () => emit("reset-transformations"),
   };
 
   eventMap[action.event]();
@@ -160,7 +170,7 @@ function updateTooltipPosition(element: HTMLElement) {
   animationFrame.value = requestAnimationFrame(() => {
     const rect = element.getBoundingClientRect();
 
-    // Position tooltip at the center horizontal and above the button
+    // Position tooltip at the center horizontal and exactly at the top border of the button
     tooltipPosition.value = {
       x: rect.left + rect.width / 2,
       y: rect.top,
@@ -176,12 +186,8 @@ function handleMouseEnter(event: MouseEvent, action: ToolbarAction) {
 
   updateTooltipPosition(element);
 
-  // Show tooltip after a brief delay
-  nextTick(() => {
-    showTooltip.value = true;
-  });
+  showTooltip.value = true;
 
-  // Continue updating position while hovering (for any dynamic changes)
   const updateLoop = () => {
     if (hoveredAction.value === action.id) {
       updateTooltipPosition(element);
@@ -250,11 +256,19 @@ function handleMouseLeave() {
   </div>
 
   <!-- Tooltip -->
-  <Tooltip
-    :visible="showTooltip"
-    :text="tooltipText"
-    :position="tooltipPosition"
-  />
+  <div
+    v-if="showTooltip"
+    class="toolbar-tooltip"
+    :style="{
+      left: tooltipPosition.x + 'px',
+      top: tooltipPosition.y + 'px',
+    }"
+  >
+    <div class="toolbar-tooltip__content">
+      {{ tooltipText }}
+      <div class="toolbar-tooltip__arrow" />
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -295,6 +309,54 @@ function handleMouseLeave() {
       height: 100%;
       transition: transform 0.1s ease;
     }
+  }
+}
+
+.toolbar-tooltip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  transform: translateX(-50%);
+  margin-top: -8px;
+
+  &__content {
+    background: rgba(0, 0, 0, 0.85);
+    color: rgba(255, 255, 255, 0.95);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      sans-serif;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    font-weight: 500;
+    animation: tooltipShow 0.15s ease forwards;
+    transform: translateY(-100%);
+  }
+
+  &__arrow {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.85);
+  }
+}
+
+@keyframes tooltipShow {
+  from {
+    opacity: 0;
+    transform: translateY(-100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%) scale(1);
   }
 }
 </style>

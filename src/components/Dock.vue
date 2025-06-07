@@ -20,6 +20,7 @@ interface Emits {
   (e: "restore-window", windowId: string): void;
   (e: "bring-to-front", windowId: string): void;
   (e: "create-new-window"): void;
+  (e: "open-settings"): void;
 }
 
 /*
@@ -32,7 +33,6 @@ const emit = defineEmits<Emits>();
  * Local state
  */
 const focusedIndex = ref(-1);
-const tooltipPosition = ref({ x: 0, y: 0 });
 const itemScales = ref<number[]>([]);
 
 /*
@@ -43,22 +43,8 @@ const { dockRef, dockItems, handleItemClick } = useDock(props.allWindows, emit);
 /*
  * Event Handlers
  */
-function handleIconMouseEnter(index: number, event: MouseEvent) {
-  const wrapper = event.currentTarget as HTMLElement;
-  const dockItem = wrapper.querySelector(".dock-item") as HTMLElement;
-
-  if (wrapper && dockItem) {
-    focusedIndex.value = index;
-
-    // Get the position of the actual dock-item (the scaled icon)
-    const itemRect = dockItem.getBoundingClientRect();
-
-    // Position tooltip at the center horizontal and just above the top of the icon
-    tooltipPosition.value = {
-      x: itemRect.left + itemRect.width / 2,
-      y: itemRect.top, // Exatamente na borda superior do ícone
-    };
-  }
+function handleIconMouseEnter(index: number) {
+  focusedIndex.value = index;
 }
 
 function handleIconMouseLeave() {
@@ -88,27 +74,21 @@ watch(dockItems, () => {
             <div class="dock-separator__line"></div>
           </div>
 
-          <!-- Dock App Icon -->
-          <AppIcon
-            v-else
-            :item="item"
-            :index="index"
-            :is-focused="focusedIndex === index"
-            @mouseenter="handleIconMouseEnter"
-            @mouseleave="handleIconMouseLeave"
-            @click="handleItemClick"
-          />
+          <!-- Dock App Icon with Tooltip -->
+          <Tooltip v-else :text="item.title">
+            <AppIcon
+              :item="item"
+              :index="index"
+              :is-focused="focusedIndex === index"
+              @mouseenter="handleIconMouseEnter"
+              @mouseleave="handleIconMouseLeave"
+              @click="handleItemClick"
+            />
+          </Tooltip>
         </template>
       </div>
     </div>
   </div>
-
-  <!-- Tooltip -->
-  <Tooltip
-    :visible="focusedIndex >= 0 && !!dockItems[focusedIndex]"
-    :text="dockItems[focusedIndex]?.title || ''"
-    :position="tooltipPosition"
-  />
 </template>
 
 <style lang="scss" scoped>
@@ -132,7 +112,7 @@ watch(dockItems, () => {
 }
 
 .dock-inner {
-  padding: 2px;
+  padding: 2px 6px;
   width: 100%;
   height: 60px;
   display: flex;
@@ -144,6 +124,7 @@ watch(dockItems, () => {
   border: 1px solid rgba(255, 255, 255, 0.18);
   min-width: 120px;
   overflow: visible;
+  gap: 12px;
 }
 
 .dock-separator {
@@ -151,26 +132,12 @@ watch(dockItems, () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 1px;
 
   &__line {
     width: 1px;
     height: 70%;
     background: rgba(255, 255, 255, 0.15);
-  }
-}
-
-// Dark mode
-@media (prefers-color-scheme: dark) {
-  .dock-inner {
-    background: rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-// Reduced motion
-@media (prefers-reduced-motion: reduce) {
-  .dock-item {
-    transition: none !important;
   }
 }
 </style>
