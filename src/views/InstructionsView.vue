@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { usePlatform } from "../hooks/usePlatform";
+
 /*
  * Custom Types
  */
@@ -15,6 +17,11 @@ interface Section {
   icon: string;
   steps: Step[];
 }
+
+/*
+ * Hooks
+ */
+const { modifierKeyName } = usePlatform();
 
 /*
  * Data
@@ -113,7 +120,7 @@ const sections: Section[] = [
         title: "Ativar grade",
         description:
           "Clique no ícone de grade para sobrepor linhas de referência sobre a imagem.",
-        tip: "A grade é útil para alinhar elementos e avaliar proporções na composição. Use Cmd+G como atalho.",
+        tip: `A grade é útil para alinhar elementos e avaliar proporções na composição. Use ${modifierKeyName.value}+G como atalho.`,
         toolbarIcon: "grid",
       },
       {
@@ -121,7 +128,7 @@ const sections: Section[] = [
         title: "Reverter alterações",
         description:
           "Use o ícone de reset (seta circular) no painel direito da barra de ferramentas para desfazer todas as transformações aplicadas à imagem.",
-        tip: "Apenas as transformações (rotação e espelhamento) são revertidas. A imagem permanece carregada na janela. Use Cmd+Shift+U como atalho.",
+        tip: `Apenas as transformações (rotação e espelhamento) são revertidas. A imagem permanece carregada na janela. Use ${modifierKeyName.value}+Shift+U como atalho.`,
         toolbarIcon: "reset",
       },
       {
@@ -129,7 +136,7 @@ const sections: Section[] = [
         title: "Remover imagem",
         description:
           "Clique no ícone 'X' (lixeira) no painel direito da barra de ferramentas para remover a imagem atual da janela.",
-        tip: "A janela permanece aberta e pronta para receber uma nova imagem. Use Cmd+Shift+D como atalho.",
+        tip: `A janela permanece aberta e pronta para receber uma nova imagem. Use ${modifierKeyName.value}+Shift+D como atalho.`,
         toolbarIcon: "trash",
       },
     ],
@@ -232,7 +239,31 @@ const sections: Section[] = [
           >
             <div class="instruction-step__number">{{ step.number }}</div>
             <div class="instruction-step__content">
-              <h3 class="instruction-step__title">{{ step.title }}</h3>
+              <div class="instruction-step__header">
+                <h3 class="instruction-step__title">{{ step.title }}</h3>
+                <div
+                  v-if="step.toolbarIcon"
+                  class="instruction-step__toolbar-preview"
+                >
+                  <div class="toolbar-button">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        :d="toolbarIconPaths[step.toolbarIcon as keyof typeof toolbarIconPaths]"
+                      />
+                    </svg>
+                  </div>
+                  <span class="toolbar-label">Botão na toolbar</span>
+                </div>
+              </div>
               <p class="instruction-step__description">
                 {{ step.description }}
               </p>
@@ -250,28 +281,6 @@ const sections: Section[] = [
                 <span>{{ step.tip }}</span>
               </div>
             </div>
-            <div
-              v-if="step.toolbarIcon"
-              class="instruction-step__toolbar-preview"
-            >
-              <div class="toolbar-button">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    :d="toolbarIconPaths[step.toolbarIcon as keyof typeof toolbarIconPaths]"
-                  />
-                </svg>
-              </div>
-              <span class="toolbar-label">Botão na toolbar</span>
-            </div>
           </div>
         </div>
       </div>
@@ -287,13 +296,28 @@ const sections: Section[] = [
         <div class="help-box__shortcuts">
           <strong>Atalhos úteis:</strong>
           <ul>
-            <li><code>Cmd+R</code> - Girar esquerda</li>
-            <li><code>Cmd+Shift+R</code> - Girar direita</li>
-            <li><code>Cmd+Shift+H</code> - Espelhar horizontal</li>
-            <li><code>Cmd+Shift+V</code> - Espelhar vertical</li>
-            <li><code>Cmd+G</code> - Alternar grade</li>
-            <li><code>Cmd+Shift+U</code> - Reverter transformações</li>
-            <li><code>Cmd+Shift+D</code> - Remover imagem</li>
+            <li>
+              <code>{{ modifierKeyName }}+R</code> - Girar esquerda
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+Shift+R</code> - Girar direita
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+Shift+H</code> - Espelhar horizontal
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+Shift+V</code> - Espelhar vertical
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+G</code> - Alternar grade
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+Shift+U</code> - Reverter
+              transformações
+            </li>
+            <li>
+              <code>{{ modifierKeyName }}+Shift+D</code> - Remover imagem
+            </li>
           </ul>
         </div>
       </div>
@@ -365,8 +389,9 @@ const sections: Section[] = [
   }
 
   &__title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
+    color: #333;
     margin: 0;
   }
 
@@ -402,17 +427,23 @@ const sections: Section[] = [
     flex: 1;
   }
 
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   &__title {
     font-size: 16px;
     font-weight: 600;
     color: #333;
-    margin: 0 0 6px;
+    margin: 0;
   }
 
   &__description {
     font-size: 14px;
     color: #666;
-    margin: 0 0 8px;
+    margin: 8px 0 8px 0;
     line-height: 1.5;
   }
 
@@ -436,19 +467,17 @@ const sections: Section[] = [
   }
 
   &__toolbar-preview {
-    position: absolute;
-    top: 0;
-    right: -60px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
 
     .toolbar-button {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -461,11 +490,12 @@ const sections: Section[] = [
     }
 
     .toolbar-label {
-      font-size: 10px;
+      font-size: 9px;
       color: #667eea;
       font-weight: 500;
       text-align: center;
       white-space: nowrap;
+      line-height: 1.2;
     }
   }
 }

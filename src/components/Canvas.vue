@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 import Icon from "./Icon.vue";
 
@@ -34,6 +34,21 @@ const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 /*
+ * Watchers
+ */
+
+// Reset file input when image is removed
+watch(
+  () => props.imageUrl,
+  (newUrl, oldUrl) => {
+    if (oldUrl && !newUrl && fileInput.value) {
+      // Reset file input value when image is removed
+      fileInput.value.value = "";
+    }
+  }
+);
+
+/*
  * Computeds
  */
 
@@ -50,6 +65,8 @@ function onFileChange(e: Event) {
   const files = target.files;
   if (files && files[0]) {
     emit("file-selected", files[0]);
+    // Reset input after selection to allow selecting the same file again
+    target.value = "";
   }
 }
 
@@ -58,6 +75,12 @@ function onDrop(e: DragEvent) {
   isDragging.value = false;
   if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
     emit("file-selected", e.dataTransfer.files[0]);
+  }
+}
+
+function handleCanvasClick() {
+  if (!props.imageUrl && fileInput.value) {
+    fileInput.value.click();
   }
 }
 </script>
@@ -69,7 +92,7 @@ function onDrop(e: DragEvent) {
     @drop="onDrop"
     @dragover.prevent="isDragging = true"
     @dragleave.prevent="isDragging = false"
-    @click="!imageUrl && fileInput?.click()"
+    @click="handleCanvasClick"
   >
     <input
       ref="fileInput"

@@ -1,8 +1,10 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { useWindowStore } from "../stores/useWindowStore";
+import { usePlatform } from "./usePlatform";
 
 export function useKeyboardShortcuts() {
   const windowStore = useWindowStore();
+  const { isMacOS } = usePlatform();
 
   function getFocusedWindow() {
     return windowStore.topWindow;
@@ -12,11 +14,11 @@ export function useKeyboardShortcuts() {
     const focusedWindow = getFocusedWindow();
     if (!focusedWindow || !focusedWindow.imageUrl) return;
 
-    // Prevent default browser shortcuts
-    const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+    // Use appropriate modifier key based on platform
+    const isModifierPressed = isMacOS.value ? event.metaKey : event.ctrlKey;
 
     // Handle by event.code for more precise key detection
-    if (isCtrlOrCmd) {
+    if (isModifierPressed) {
       switch (event.code) {
         case "KeyR":
           if (event.shiftKey) {

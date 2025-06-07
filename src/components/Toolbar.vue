@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref } from "vue";
+import { usePlatform } from "../hooks/usePlatform";
 
 import Icon from "./Icon.vue";
 
@@ -59,6 +60,11 @@ const emit = defineEmits<Events>();
 defineProps<Props>();
 
 /*
+ * Hooks
+ */
+const { modifierKey } = usePlatform();
+
+/*
  * Refs & Reactives
  */
 const hoveredAction = ref<string | null>(null);
@@ -77,28 +83,28 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "flip-vertical",
     event: "flip-vertical",
     icon: "flip-vertical",
-    title: "Espelhar vertical (⌘⇧V)",
+    title: `Espelhar vertical (${modifierKey.value}⇧V)`,
     group: "transform",
   },
   {
     id: "flip-horizontal",
     event: "flip-horizontal",
     icon: "flip-horizontal",
-    title: "Espelhar horizontal (⌘⇧H)",
+    title: `Espelhar horizontal (${modifierKey.value}⇧H)`,
     group: "transform",
   },
   {
     id: "rotate-left",
     event: "rotate-left",
     icon: "rotate-left",
-    title: "Girar esquerda (⌘R)",
+    title: `Girar esquerda (${modifierKey.value}R)`,
     group: "transform",
   },
   {
     id: "rotate-right",
     event: "rotate-right",
     icon: "rotate-right",
-    title: "Girar direita (⌘⇧R)",
+    title: `Girar direita (${modifierKey.value}⇧R)`,
     group: "transform",
   },
   // View group
@@ -106,7 +112,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "toggle-grid",
     event: "toggle-grid",
     icon: "grid",
-    title: "Mostrar grid (⌘G)",
+    title: `Mostrar grid (${modifierKey.value}G)`,
     group: "view",
   },
   // File group
@@ -114,7 +120,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "reset-transformations",
     event: "reset-transformations",
     icon: "reset",
-    title: "Reverter alterações (⌘⇧U)",
+    title: `Reverter alterações (${modifierKey.value}⇧U)`,
     group: "file",
   },
   {
@@ -128,7 +134,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
     id: "remove",
     event: "remove",
     icon: "trash",
-    title: "Remover imagem (⌘⇧D)",
+    title: `Remover imagem (${modifierKey.value}⇧D)`,
     group: "file",
   },
 ] as const;
